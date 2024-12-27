@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/buji/p2p-discovery/examples/basic/calculator/proto"
 	"github.com/jibuji/go-stream-rpc/rpc"
+	"github.com/jibuji/p2p-discovery/examples/basic/calculator/proto"
 )
 
 const CalculatorProtocolID = "/calculator/1.0.0"

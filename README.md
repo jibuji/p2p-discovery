@@ -12,7 +12,7 @@ A libp2p-based decentralized service discovery system that allows peers to disco
 ## Installation
 
 ```bash
-go get github.com/buji/p2p-discovery
+go get github.com/jibuji/p2p-discovery
 ```
 
 ## Usage

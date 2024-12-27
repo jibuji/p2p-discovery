@@ -1,4 +1,4 @@
-module github.com/buji/p2p-discovery
+module github.com/jibuji/p2p-discovery
 
 go 1.22.0
 

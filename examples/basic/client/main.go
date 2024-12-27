@@ -7,10 +7,10 @@ import (
 	"log"
 	"time"
 
-	"github.com/buji/p2p-discovery/examples/basic/calculator/proto"
-	"github.com/buji/p2p-discovery/examples/basic/calculator/proto/service"
-	"github.com/buji/p2p-discovery/pkg/discovery"
 	"github.com/jibuji/go-stream-rpc/rpc"
+	"github.com/jibuji/p2p-discovery/examples/basic/calculator/proto"
+	"github.com/jibuji/p2p-discovery/examples/basic/calculator/proto/service"
+	"github.com/jibuji/p2p-discovery/pkg/discovery"
 	"github.com/libp2p/go-libp2p"
 	"github.com/libp2p/go-libp2p/core/host"
 	"github.com/libp2p/go-libp2p/core/peer"
