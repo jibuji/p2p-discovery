@@ -8,11 +8,13 @@ import (
 	"time"
 
 	"github.com/jibuji/go-stream-rpc/rpc"
+	rpcStream "github.com/jibuji/go-stream-rpc/stream/libp2p"
 	"github.com/jibuji/p2p-discovery/examples/basic/calculator/proto"
 	"github.com/jibuji/p2p-discovery/examples/basic/calculator/proto/service"
 	"github.com/jibuji/p2p-discovery/pkg/discovery"
 	"github.com/libp2p/go-libp2p"
 	"github.com/libp2p/go-libp2p/core/host"
+	"github.com/libp2p/go-libp2p/core/network"
 	"github.com/libp2p/go-libp2p/core/peer"
 	"github.com/libp2p/go-libp2p/core/protocol"
 	"github.com/multiformats/go-multiaddr"
@@ -50,7 +52,7 @@ func main() {
 	log.Println("start register service")
 	// Register echo service
 	err = ds.RegisterService(protocolID, []discovery.ServiceCradle{
-		{Name: serviceName, Creator: func(peer *rpc.RpcPeer) discovery.ServiceHandler {
+		{Name: serviceName, Creator: func(ctx context.Context, peer *rpc.RpcPeer) discovery.ServiceHandler {
 			log.Println("register service for protocol", protocolID)
 			go func() {
 				time.Sleep(10 * time.Second)
@@ -104,13 +106,19 @@ func main() {
 		}
 	}
 
+	host.SetStreamHandler(protocol.ID("test/1.0.0"), func(stream network.Stream) {
+		log.Println("New connection on test/1.0.0 from: ", stream.Conn().RemotePeer())
+		libp2pStream := rpcStream.NewLibP2PStream(stream)
+		peer := rpc.NewRpcPeer(libp2pStream)
+		peer.RegisterService("Calculator", service.NewCalculatorService(peer))
+	})
 	<-ctx.Done()
 }
 
 func connectToPeer(ctx context.Context, host host.Host, addrInfo *peer.AddrInfo) {
 	log.Printf("Successfully connected to peer %s\n", addrInfo.ID)
 	// time.Sleep(10 * time.Second)
-	stream, err := host.NewStream(ctx, addrInfo.ID, protocol.ID(protocolID))
+	stream, err := host.NewStream(ctx, addrInfo.ID, protocol.ID("whatevs"))
 	if err != nil {
 		log.Printf("Failed to create stream to peer %s: %v\n", addrInfo.ID, err)
 	} else {

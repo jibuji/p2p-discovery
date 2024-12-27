@@ -17,7 +17,9 @@ import (
 	"github.com/jibuji/p2p-discovery/pkg/discovery"
 	"github.com/libp2p/go-libp2p"
 	"github.com/libp2p/go-libp2p/core/crypto"
+	"github.com/libp2p/go-libp2p/core/host"
 	"github.com/libp2p/go-libp2p/core/network"
+	"github.com/libp2p/go-libp2p/core/protocol"
 )
 
 const (
@@ -54,10 +56,12 @@ func main() {
 	ds := discovery.WithNode(host)
 
 	log.Println("start register service")
-	host.SetStreamHandler(protocolID, handleStream)
+	host.SetStreamHandler("whatevs", func(stream network.Stream) {
+		handleStream(host, stream)
+	})
 	// Register echo service
 	err = ds.RegisterService(protocolID, []discovery.ServiceCradle{
-		{Name: serviceName, Creator: func(peer *rpc.RpcPeer) discovery.ServiceHandler {
+		{Name: serviceName, Creator: func(ctx context.Context, peer *rpc.RpcPeer) discovery.ServiceHandler {
 			log.Println("register service for protocol", protocolID)
 			log.Println("peer", peer)
 			go func() {
@@ -96,10 +100,10 @@ func main() {
 	<-ctx.Done()
 }
 
-func handleStream(s network.Stream) {
-	log.Printf("New connection from: %s\n", s.Conn().RemotePeer())
+func handleStream(host host.Host, stream network.Stream) {
+	log.Printf("New connection from: %s\n", stream.Conn().RemotePeer())
 
-	libp2pStream := rpcStream.NewLibP2PStream(s)
+	libp2pStream := rpcStream.NewLibP2PStream(stream)
 
 	// Create custom session if needed
 	customSession := session.NewMemSession()
@@ -110,7 +114,23 @@ func handleStream(s network.Stream) {
 	peer.RegisterService("Calculator", service.NewCalculatorService(peer))
 	// Register the calculator service
 	// proto.RegisterCalculatorServer(peer, &calculator.CalculatorService{})
-	err := peer.Wait()
+	// create a new stream with protocol test/1.0.0
+	s, err := host.NewStream(context.Background(), stream.Conn().RemotePeer(), protocol.ID("test/1.0.0"))
+	if err != nil {
+		log.Println(err)
+	}
+	log.Println("New stream created with protocol test/1.0.0")
+	cp := rpc.NewRpcPeer(rpcStream.NewLibP2PStream(s))
+	ccli := proto.NewCalculatorClient(cp)
+	go func() {
+		for {
+			resp := ccli.Multiply(&proto.MultiplyRequest{A: 9, B: 3})
+			log.Println("Multiply result:", resp)
+			time.Sleep(5 * time.Second)
+		}
+	}()
+
+	err = peer.Wait()
 	if err != nil {
 		log.Println(err)
 	}

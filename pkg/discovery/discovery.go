@@ -22,7 +22,7 @@ import (
 type ServiceHandler interface{}
 
 // ServiceCreator is a factory for creating services
-type ServiceCreator func(peer *rpc.RpcPeer) ServiceHandler
+type ServiceCreator func(ctx context.Context, peer *rpc.RpcPeer) ServiceHandler
 
 // Discovery represents the main discovery service
 type Discovery struct {
@@ -189,12 +189,17 @@ func (d *Discovery) RegisterService(protocolName string, serviceCradles []Servic
 		peer := rpc.NewRpcPeer(libp2pStream, rpc.WithSession(customSession))
 		defer peer.Close()
 		for _, serviceCradle := range serviceCradles {
-			serviceHandler := serviceCradle.Creator(peer)
+			serviceHandler := serviceCradle.Creator(d.ctx, peer)
 			peer.RegisterService(serviceCradle.Name, serviceHandler)
 		}
-		err := peer.Wait()
-		if err != nil {
-			log.Println("=====wait error", err)
+		for {
+			select {
+			case <-d.ctx.Done():
+				return
+			case err := <-peer.ErrorChannel():
+				log.Println("=====peer error", err)
+				return
+			}
 		}
 	})
 
@@ -239,4 +244,9 @@ func (d *Discovery) startAnnounceProtocol() error {
 	}()
 
 	return nil
+}
+
+func (d *Discovery) Close() error {
+	d.cancel()
+	return d.host.Close()
 }
