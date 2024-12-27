@@ -170,7 +170,7 @@ type ServiceCradle struct {
 }
 
 // RegisterService registers a new service with its handler
-func (d *Discovery) RegisterService(ctx context.Context, protocolName string, serviceCradles []ServiceCradle) error {
+func (d *Discovery) RegisterService(protocolName string, serviceCradles []ServiceCradle) error {
 	d.mu.Lock()
 	if _, ok := d.protocolRegistry[protocolName]; ok {
 		d.mu.Unlock()
@@ -199,7 +199,7 @@ func (d *Discovery) RegisterService(ctx context.Context, protocolName string, se
 	})
 
 	routingDiscovery := routing.NewRoutingDiscovery(d.kdht)
-	routingDiscovery.Advertise(ctx, protocolName)
+	routingDiscovery.Advertise(d.ctx, protocolName)
 	return nil
 }
 

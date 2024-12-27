@@ -56,7 +56,7 @@ func main() {
 	log.Println("start register service")
 	host.SetStreamHandler(protocolID, handleStream)
 	// Register echo service
-	err = ds.RegisterService(ctx, protocolID, []discovery.ServiceCradle{
+	err = ds.RegisterService(protocolID, []discovery.ServiceCradle{
 		{Name: serviceName, Creator: func(peer *rpc.RpcPeer) discovery.ServiceHandler {
 			log.Println("register service for protocol", protocolID)
 			log.Println("peer", peer)
